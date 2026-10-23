@@ -1,5 +1,6 @@
 {
   "name": "enterprise-app-factory",
+  "description": "AI software factory plugins for building and deploying enterprise full-stack apps.",
   "owner": {
     "name": "<your-name>"
   },
@@ -7,7 +8,7 @@
     {
       "name": "enterprise-app-factory",
       "source": "./",
-      "description": "Design doc → Spring Boot + React + PostgreSQL app → Docker locally → free cloud hosting."
+      "description": "Design doc \u2192 Spring Boot + React + PostgreSQL app \u2192 Docker locally \u2192 free cloud hosting."
     }
   ]
 }
