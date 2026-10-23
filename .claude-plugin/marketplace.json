@@ -1,0 +1,13 @@
+{
+  "name": "enterprise-app-factory",
+  "owner": {
+    "name": "<your-name>"
+  },
+  "plugins": [
+    {
+      "name": "enterprise-app-factory",
+      "source": "./",
+      "description": "Design doc → Spring Boot + React + PostgreSQL app → Docker locally → free cloud hosting."
+    }
+  ]
+}
