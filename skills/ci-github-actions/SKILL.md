@@ -30,6 +30,21 @@ Testcontainers works out of the box on `ubuntu-latest` because Docker is preinst
 - Recommend that the user enables branch protection on `main`: require the three jobs to
   pass and require a PR. The agent doesn't change repository settings itself.
 
+## Pushing the workflow file
+
+GitHub rejects a push that adds or changes `.github/workflows/*` when the token lacks the
+`workflow` scope: "refusing to allow an OAuth App to create or update workflow ... without
+`workflow` scope". `gh auth login` doesn't request that scope by default. Have the user
+grant it once:
+
+```bash
+gh auth refresh --hostname github.com --scopes workflow < /dev/null
+```
+
+Redirecting stdin skips the interactive prompts. The user just opens
+https://github.com/login/device, enters the code shown, and clicks **Authorize**. Then
+retry the push.
+
 ## When CI fails
 
 1. Get the logs: `gh run view --log-failed`.

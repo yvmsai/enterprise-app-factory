@@ -57,6 +57,13 @@ passwords, connection strings or API keys.
 3. Build the JDBC URL: `jdbc:postgresql://<host>/<database>?sslmode=require`. Use the
    pooled host (it contains `-pooler`) if it's shown.
 
+If the user has linked the project with the Neon CLI (`neon init` writes `DATABASE_URL` to
+`.env`), derive `NEON_DB_URL`, `NEON_DB_USERNAME` and `NEON_DB_PASSWORD` from it into the
+gitignored `.env` with a script that never prints the values. The `postgresql://` URL is not
+a valid Spring datasource URL, and `channel_binding` isn't needed. Leave the local `DB_*`
+values alone, and tell the user which `.env` key to copy into which Render variable. Ask
+them not to paste connection strings into chat.
+
 **B. Deploy on Render**
 1. Sign up at https://render.com with your GitHub account.
 2. Click **New → Blueprint**, select this repository, and Render will read `render.yaml`.
@@ -69,6 +76,9 @@ passwords, connection strings or API keys.
    | `<app>-api` | `FRONTEND_ORIGIN` | `https://<app>-web.onrender.com` |
    | `<app>-api` | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | your first admin login |
    | `<app>-web` | `VITE_API_BASE_URL` | `https://<app>-api.onrender.com` |
+   **Each variable belongs to exactly one service.** `FRONTEND_ORIGIN` goes on the **API**
+   (the Docker web service), even though it holds the website's URL. Users often put it on
+   the static site because of its name. The static site needs only `VITE_API_BASE_URL`.
 4. Click **Apply**. The first deploy takes about 5–10 minutes. `JWT_SECRET` is generated
    automatically.
 5. If Render gave the services different URLs (because the names were taken), update
@@ -78,13 +88,30 @@ passwords, connection strings or API keys.
 
 ## Verification (agent, after the user says it's deployed)
 
+A `200` from both URLs is not enough: check that the two services are wired together.
+
 ```bash
-curl -fsS https://<app>-api.onrender.com/actuator/health     # allow ~60 s on a cold start
-curl -fsS -o /dev/null -w "%{http_code}\n" https://<app>-web.onrender.com   # 200
+W=https://<app>-web.onrender.com; A=https://<app>-api.onrender.com
+curl -fsS $A/actuator/health                                   # UP (allow ~60 s on a cold start)
+curl -fsS -o /dev/null -w "%{http_code}\n" $W                   # 200
+curl -fsS -o /dev/null -w "%{http_code}\n" $W/products          # 200: SPA rewrite works
+# API URL baked into the SPA bundle
+curl -s "$W$(curl -s $W | grep -o '/assets/index-[^"]*\.js' | head -1)" | grep -o 'https://[a-z0-9.-]*onrender.com' | sort -u
+# CORS preflight from the site: expect 200 + access-control-allow-origin: $W
+curl -s -o /dev/null -D - -X OPTIONS $A/api/v1/auth/login -H "Origin: $W" \
+  -H "Access-Control-Request-Method: POST" -H "Access-Control-Request-Headers: content-type" | grep -i '^HTTP\|allow-origin'
+# Another origin must still be rejected: expect 403
+curl -s -o /dev/null -w "%{http_code}\n" -X OPTIONS $A/api/v1/auth/login -H "Origin: https://example.com" -H "Access-Control-Request-Method: POST"
+# DB reachable: a wrong login returns 401 problem-detail (not 500)
+curl -s -X POST $A/api/v1/auth/login -H 'Content-Type: application/json' -d '{"email":"x@example.com","password":"wrong"}'
 ```
 
-Then ask the user to log in with the admin account and try one create/list flow. Report
-both URLs and the cold-start caveat.
+Don't test CORS with the API's own URL as `Origin`. Spring treats same-origin requests as
+non-CORS and always lets them through, whatever `FRONTEND_ORIGIN` says.
+
+Then load the site in a browser and submit a deliberately wrong login. Seeing "Invalid
+email or password" proves the whole chain (browser → API → database). Ask the user to log
+in with their admin account. Report both URLs and the cold-start caveat.
 
 ## Troubleshooting
 
@@ -93,6 +120,8 @@ both URLs and the cold-start caveat.
 | API deploy fails "port not detected" | `server.port` isn't `${PORT:8080}` |
 | API crashes with OOM | Missing `-XX:MaxRAMPercentage=75`, or Hikari pool too big |
 | `Connection refused` / SSL error to DB | JDBC URL missing `?sslmode=require`, or the `postgres://` format was used instead of `jdbc:postgresql://` |
-| Browser shows CORS error | `FRONTEND_ORIGIN` doesn't exactly match the site URL (scheme, no trailing slash) |
+| Default `onrender.com` URLs return an instant 404 "Not Found" | No service exists under that name: the Blueprint wasn't applied, or Render added a suffix. Ask for the real URLs from the dashboard. |
+| Preflight returns 403 "Invalid CORS request" for **every** origin, including `localhost` | `FRONTEND_ORIGIN` is empty on the API: it was put on the static site instead, or left blank in the Blueprint (`sync: false` creates the key with no value). Move it to the API and redeploy. |
+| Browser shows CORS error for the site only | `FRONTEND_ORIGIN` doesn't match the site URL (wrong scheme, or Render's suffixed URL). `normalizeOrigins` already tolerates stray spaces, quotes and trailing slashes. |
 | Page refresh gives 404 | Static-site rewrite rule `/*` → `/index.html` is missing |
 | Frontend calls `localhost` | `VITE_API_BASE_URL` was set after the build. Redeploy the static site. |

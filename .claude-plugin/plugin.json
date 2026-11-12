@@ -1,6 +1,6 @@
 {
   "name": "enterprise-app-factory",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "AI software factory: turns a design document into an enterprise-grade Spring Boot + React + PostgreSQL application, runs it locally in Docker, and deploys it to free cloud hosting.",
   "author": {
     "name": "yvmsai",
