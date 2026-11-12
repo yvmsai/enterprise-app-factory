@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "description": "AI software factory: turns a design document into an enterprise-grade Spring Boot + React + PostgreSQL application, runs it locally in Docker, and deploys it to free cloud hosting.",
   "author": {
-    "name": "<your-name>",
-    "url": "https://github.com/<your-github-username>"
+    "name": "yvmsai",
+    "url": "https://github.com/yvmsai"
   },
-  "homepage": "https://github.com/<your-github-username>/enterprise-app-factory",
-  "repository": "https://github.com/<your-github-username>/enterprise-app-factory",
+  "homepage": "https://github.com/yvmsai/enterprise-app-factory",
+  "repository": "https://github.com/yvmsai/enterprise-app-factory",
   "license": "MIT",
   "keywords": ["spring-boot", "react", "postgresql", "docker", "full-stack", "code-generation", "enterprise"]
 }

@@ -2,7 +2,7 @@
   "name": "enterprise-app-factory",
   "description": "AI software factory plugins for building and deploying enterprise full-stack apps.",
   "owner": {
-    "name": "<your-name>"
+    "name": "yvmsai"
   },
   "plugins": [
     {

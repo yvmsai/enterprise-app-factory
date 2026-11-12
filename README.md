@@ -48,7 +48,7 @@ pipeline and calls each skill in turn.
 From GitHub (after you push this repo):
 
 ```
-/plugin marketplace add <your-github-username>/enterprise-app-factory
+/plugin marketplace add yvmsai/enterprise-app-factory
 /plugin install enterprise-app-factory@enterprise-app-factory
 ```
 
